@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Star Catcher</title>
+<meta name="theme-color" content="#0b1026">
+<title>Star Catcher: Neon</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     width: 100%; height: 100%; overflow: hidden;
-    background: #0b1026;
+    background: #05051a;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #fff;
     touch-action: none;
@@ -18,43 +19,112 @@
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
-  #game { display: block; width: 100vw; height: 100vh; background: linear-gradient(180deg, #0b1026 0%, #1a1052 100%); }
+  #game { display: block; width: 100vw; height: 100vh; }
   #hud {
     position: fixed; top: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between;
-    padding: 14px 18px; font-size: 18px; font-weight: 600;
-    pointer-events: none; text-shadow: 0 2px 6px rgba(0,0,0,.5);
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 14px 18px; pointer-events: none;
+    text-shadow: 0 2px 10px rgba(0,0,0,.8), 0 0 12px rgba(120, 80, 255, .5);
+    z-index: 2;
   }
+  #hud .left, #hud .right { font-size: 18px; font-weight: 700; letter-spacing: .5px; }
+  #hud .label { font-size: 12px; opacity: .7; text-transform: uppercase; letter-spacing: 2px; }
+  #hud .value { font-size: 26px; }
+  #score.pulse { animation: pulse .3s ease; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: #ffd166; } 100% { transform: scale(1); } }
+
+  #combo {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+    font-size: 22px; font-weight: 800; letter-spacing: 1px;
+    pointer-events: none; z-index: 2; opacity: 0;
+    text-shadow: 0 0 16px currentColor, 0 2px 6px rgba(0,0,0,.7);
+    transition: opacity .3s;
+  }
+  #combo.show { opacity: 1; }
+
+  #powerups {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; z-index: 2; pointer-events: none;
+  }
+  .badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px;
+    background: rgba(10, 5, 40, .7);
+    border: 1px solid rgba(255,255,255,.2);
+    font-size: 13px; font-weight: 700;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 20px currentColor;
+  }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+
   #overlay {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    background: rgba(5, 8, 25, 0.85);
-    text-align: center; padding: 24px;
+    background: radial-gradient(circle at 50% 40%, rgba(40, 10, 80, 0.85), rgba(5, 5, 25, 0.95));
+    text-align: center; padding: 24px; z-index: 10;
+    backdrop-filter: blur(6px);
   }
   #overlay.hidden { display: none; }
-  #overlay h1 { font-size: 42px; margin-bottom: 8px; letter-spacing: 1px; }
-  #overlay p { font-size: 18px; margin-bottom: 24px; opacity: .85; }
-  #startBtn {
-    background: linear-gradient(135deg, #ffd166, #ef476f);
-    color: #fff; border: none; border-radius: 999px;
-    padding: 16px 42px; font-size: 20px; font-weight: 700;
-    box-shadow: 0 8px 24px rgba(239, 71, 111, .4);
-    cursor: pointer; touch-action: manipulation;
+  #overlay h1 {
+    font-size: 48px; margin-bottom: 8px; letter-spacing: 2px;
+    background: linear-gradient(90deg, #ffd166, #ef476f, #06d6a0, #118ab2, #ffd166);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    animation: shimmer 3s linear infinite;
+    filter: drop-shadow(0 4px 20px rgba(239, 71, 111, .4));
   }
-  #startBtn:active { transform: scale(0.96); }
-  #finalScore { font-size: 28px; margin-bottom: 16px; color: #ffd166; }
+  @keyframes shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  #overlay p { font-size: 16px; margin-bottom: 20px; opacity: .9; line-height: 1.5; max-width: 320px; }
+  #startBtn {
+    background: linear-gradient(135deg, #ef476f, #ffd166, #06d6a0);
+    background-size: 200% 200%;
+    color: #fff; border: none; border-radius: 999px;
+    padding: 18px 48px; font-size: 22px; font-weight: 800;
+    box-shadow: 0 8px 30px rgba(239, 71, 111, .5), 0 0 40px rgba(255, 209, 102, .3);
+    cursor: pointer; touch-action: manipulation;
+    letter-spacing: 1px; text-transform: uppercase;
+    animation: btnShine 3s ease infinite;
+  }
+  @keyframes btnShine { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  #startBtn:active { transform: scale(0.95); }
+  #finalScore {
+    font-size: 36px; margin-bottom: 20px; font-weight: 800;
+    color: #ffd166; text-shadow: 0 0 20px rgba(255, 209, 102, .6);
+  }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-bottom: 20px; font-size: 13px; max-width: 340px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; opacity: .9; }
+  .legend .sw { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px currentColor; background: currentColor; }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div>Score: <span id="score">0</span></div>
-  <div>Lives: <span id="lives">3</span></div>
+  <div class="left">
+    <div class="label">Score</div>
+    <div class="value" id="score">0</div>
+  </div>
+  <div class="right" style="text-align:right;">
+    <div class="label">Lives</div>
+    <div class="value" id="lives">3</div>
+  </div>
 </div>
+<div id="combo"></div>
+<div id="powerups"></div>
 <div id="overlay">
-  <h1>Star Catcher</h1>
-  <p>Tap the stars before they fall off screen.<br>Avoid the bombs!</p>
+  <h1>STAR CATCHER</h1>
+  <p>Tap stars to score. Grab power-ups. Dodge bombs.<br>Build combos for massive points!</p>
+  <div class="legend">
+    <div class="item" style="color:#ffd166;"><span class="sw"></span>Star +1</div>
+    <div class="item" style="color:#ff4d6d;"><span class="sw"></span>Bomb −1 life</div>
+    <div class="item" style="color:#06d6a0;"><span class="sw"></span>Slow-Mo</div>
+    <div class="item" style="color:#118ab2;"><span class="sw"></span>2x Score</div>
+    <div class="item" style="color:#ef476f;"><span class="sw"></span>Extra Life</div>
+    <div class="item" style="color:#b388ff;"><span class="sw"></span>Magnet</div>
+    <div class="item" style="color:#ffa600;"><span class="sw"></span>Shield</div>
+    <div class="item" style="color:#f72585;"><span class="sw"></span>Nuke</div>
+  </div>
   <div id="finalScore" style="display:none;"></div>
   <button id="startBtn">Tap to Play</button>
 </div>
@@ -65,9 +135,11 @@
   const ctx = canvas.getContext('2d');
   const scoreEl = document.getElementById('score');
   const livesEl = document.getElementById('lives');
+  const comboEl = document.getElementById('combo');
   const overlay = document.getElementById('overlay');
   const startBtn = document.getElementById('startBtn');
   const finalScoreEl = document.getElementById('finalScore');
+  const powerupsEl = document.getElementById('powerups');
 
   let W = 0, H = 0, dpr = 1;
   function resize() {
@@ -79,127 +151,301 @@
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    initStars();
   }
   window.addEventListener('resize', resize);
-  resize();
+
+  const POWERUPS = {
+    slow:   { color: '#06d6a0', label: 'Slow-Mo',   dur: 5 },
+    double: { color: '#118ab2', label: '2x Score',  dur: 6 },
+    life:   { color: '#ef476f', label: 'Life+',     dur: 0 },
+    magnet: { color: '#b388ff', label: 'Magnet',    dur: 6 },
+    shield: { color: '#ffa600', label: 'Shield',    dur: 0 },
+    nuke:   { color: '#f72585', label: 'Nuke',      dur: 0 },
+  };
 
   const state = {
     running: false,
     score: 0,
     lives: 3,
+    combo: 0,
+    comboTimer: 0,
     objects: [],
     particles: [],
+    popups: [],
+    shockwaves: [],
+    bgStars: [],
+    nebula: [],
     spawnTimer: 0,
-    spawnInterval: 900,
+    powerupTimer: 0,
     lastTime: 0,
     elapsed: 0,
+    shake: 0,
+    shieldActive: false,
+    activePowerups: {},
+    flash: 0,
+    flashColor: '#fff',
+    hueShift: 0,
   };
 
-  function rand(a, b) { return a + Math.random() * (b - a); }
-
-  function spawnObject() {
-    const isBomb = Math.random() < 0.18;
-    const radius = rand(24, 36);
-    state.objects.push({
-      x: rand(radius, W - radius),
-      y: -radius,
-      vy: rand(120, 220) + state.elapsed * 0.008,
-      vx: rand(-30, 30),
-      r: radius,
-      bomb: isBomb,
-      rot: 0,
-      vr: rand(-2, 2),
-      alive: true,
-    });
-  }
-
-  function addBurst(x, y, color) {
-    for (let i = 0; i < 14; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = rand(80, 220);
-      state.particles.push({
-        x, y,
-        vx: Math.cos(a) * s,
-        vy: Math.sin(a) * s,
-        life: 0.6,
-        maxLife: 0.6,
-        color,
-        size: rand(2, 4),
+  function initStars() {
+    state.bgStars = [];
+    const count = Math.min(150, Math.floor(W * H / 8000));
+    for (let i = 0; i < count; i++) {
+      state.bgStars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.6 + 0.3,
+        speed: Math.random() * 20 + 5,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+    state.nebula = [];
+    for (let i = 0; i < 4; i++) {
+      state.nebula.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: rand(200, 400),
+        hue: rand(260, 340),
+        vx: rand(-8, 8),
+        vy: rand(-8, 8),
       });
     }
   }
 
-  function drawStar(cx, cy, r, rot) {
-    const spikes = 5;
-    const outer = r;
-    const inner = r * 0.45;
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function chance(p) { return Math.random() < p; }
+
+  function isPowerupActive(k) {
+    return state.activePowerups[k] && state.activePowerups[k] > 0;
+  }
+
+  function spawnObject() {
+    const roll = Math.random();
+    let type = 'star';
+    if (roll < 0.15) type = 'bomb';
+    else if (roll < 0.22) type = 'gem';
+    const radius = type === 'gem' ? rand(20, 28) : rand(26, 38);
+    state.objects.push({
+      type, x: rand(radius, W - radius), y: -radius,
+      vy: rand(130, 230) + state.elapsed * 0.009,
+      vx: rand(-40, 40),
+      r: radius,
+      rot: 0, vr: rand(-3, 3),
+      hue: rand(40, 60),
+      alive: true, trail: [],
+    });
+  }
+
+  function spawnPowerup() {
+    const keys = Object.keys(POWERUPS);
+    const kind = keys[Math.floor(Math.random() * keys.length)];
+    const radius = 28;
+    state.objects.push({
+      type: 'powerup', kind, x: rand(radius, W - radius), y: -radius,
+      vy: rand(100, 160), vx: rand(-30, 30),
+      r: radius, rot: 0, vr: rand(-2, 2),
+      alive: true, trail: [], pulse: 0,
+    });
+  }
+
+  function addBurst(x, y, color, n, speed) {
+    n = n || 18; speed = speed || 240;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = rand(speed * 0.3, speed);
+      state.particles.push({
+        x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: rand(0.4, 0.9), maxLife: 0.9,
+        color, size: rand(2, 5), gravity: 300,
+      });
+    }
+  }
+
+  function addPopup(x, y, text, color) {
+    state.popups.push({ x, y, text, color, life: 1, maxLife: 1, vy: -80 });
+  }
+
+  function addShockwave(x, y, color) {
+    state.shockwaves.push({ x, y, r: 10, maxR: 140, color, life: 0.5, maxLife: 0.5 });
+  }
+
+  function screenShake(v) { state.shake = Math.min(20, state.shake + v); }
+  function flashScreen(color, amount) { state.flash = amount; state.flashColor = color; }
+
+  function drawStar(cx, cy, r, rot, hue) {
+    const spikes = 5, outer = r, inner = r * 0.45;
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(rot);
+    ctx.translate(cx, cy); ctx.rotate(rot);
     ctx.beginPath();
     for (let i = 0; i < spikes * 2; i++) {
       const rad = i % 2 === 0 ? outer : inner;
       const a = (Math.PI / spikes) * i - Math.PI / 2;
-      const x = Math.cos(a) * rad;
-      const y = Math.sin(a) * rad;
+      const x = Math.cos(a) * rad, y = Math.sin(a) * rad;
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.closePath();
     const g = ctx.createRadialGradient(0, 0, 2, 0, 0, outer);
-    g.addColorStop(0, '#fff3b0');
-    g.addColorStop(1, '#ffb703');
+    g.addColorStop(0, '#fffdd6');
+    g.addColorStop(0.5, `hsl(${hue}, 100%, 65%)`);
+    g.addColorStop(1, `hsl(${hue - 20}, 100%, 50%)`);
     ctx.fillStyle = g;
-    ctx.shadowColor = '#ffd166';
-    ctx.shadowBlur = 18;
+    ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+    ctx.shadowBlur = 24;
     ctx.fill();
+    ctx.restore();
+  }
+
+  function drawGem(cx, cy, r, rot) {
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(rot);
+    const hue = (state.hueShift * 2) % 360;
+    ctx.beginPath();
+    ctx.moveTo(0, -r);
+    ctx.lineTo(r * 0.85, -r * 0.2);
+    ctx.lineTo(r * 0.5, r);
+    ctx.lineTo(-r * 0.5, r);
+    ctx.lineTo(-r * 0.85, -r * 0.2);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(-r, -r, r, r);
+    g.addColorStop(0, `hsl(${hue}, 100%, 70%)`);
+    g.addColorStop(0.5, `hsl(${hue + 60}, 100%, 65%)`);
+    g.addColorStop(1, `hsl(${hue + 120}, 100%, 60%)`);
+    ctx.fillStyle = g;
+    ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+    ctx.shadowBlur = 28;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.7)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
     ctx.restore();
   }
 
   function drawBomb(cx, cy, r, rot) {
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(rot);
+    ctx.translate(cx, cy); ctx.rotate(rot);
     ctx.beginPath();
     ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2);
     const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 2, 0, 0, r);
-    g.addColorStop(0, '#555');
-    g.addColorStop(1, '#111');
+    g.addColorStop(0, '#666'); g.addColorStop(1, '#0a0a0a');
     ctx.fillStyle = g;
-    ctx.shadowColor = '#ef476f';
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#ff4d6d'; ctx.shadowBlur = 18;
     ctx.fill();
-    ctx.strokeStyle = '#ef476f';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, -r * 0.9);
-    ctx.lineTo(r * 0.2, -r * 1.3);
-    ctx.stroke();
-    ctx.fillStyle = '#ffd166';
-    ctx.beginPath();
-    ctx.arc(r * 0.2, -r * 1.3, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, -r * 0.9); ctx.lineTo(r * 0.25, -r * 1.35); ctx.stroke();
+    const fuseFlicker = Math.sin(state.elapsed * 0.02) * 0.3 + 0.7;
+    ctx.fillStyle = `rgba(255, 209, 102, ${fuseFlicker})`;
+    ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(r * 0.25, -r * 1.35, 5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
+  function drawPowerup(o) {
+    const p = POWERUPS[o.kind];
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    const pulse = 1 + Math.sin(o.pulse) * 0.08;
+    ctx.scale(pulse, pulse);
+    ctx.rotate(o.rot);
+    ctx.beginPath();
+    const sides = 6;
+    for (let i = 0; i < sides; i++) {
+      const a = (Math.PI * 2 / sides) * i - Math.PI / 2;
+      const x = Math.cos(a) * o.r, y = Math.sin(a) * o.r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    const g = ctx.createRadialGradient(0, 0, 2, 0, 0, o.r);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.6, p.color);
+    g.addColorStop(1, p.color);
+    ctx.fillStyle = g;
+    ctx.shadowColor = p.color; ctx.shadowBlur = 32;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.lineWidth = 2; ctx.stroke();
+
+    ctx.rotate(-o.rot);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    const letter = { slow: 'S', double: '2x', life: '+', magnet: 'M', shield: '◈', nuke: '☀' }[o.kind];
+    ctx.fillText(letter, 0, 1);
+    ctx.restore();
+  }
+
+  function drawBackground(dt) {
+    ctx.fillStyle = '#05051a';
+    ctx.fillRect(0, 0, W, H);
+
+    for (const n of state.nebula) {
+      n.x += n.vx * dt; n.y += n.vy * dt;
+      if (n.x < -n.r) n.x = W + n.r; else if (n.x > W + n.r) n.x = -n.r;
+      if (n.y < -n.r) n.y = H + n.r; else if (n.y > H + n.r) n.y = -n.r;
+      const hue = (n.hue + state.hueShift * 0.3) % 360;
+      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+      g.addColorStop(0, `hsla(${hue}, 80%, 55%, 0.35)`);
+      g.addColorStop(1, `hsla(${hue}, 80%, 55%, 0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(n.x - n.r, n.y - n.r, n.r * 2, n.r * 2);
+    }
+
+    for (const s of state.bgStars) {
+      s.y += s.speed * dt;
+      s.twinkle += dt * 3;
+      if (s.y > H) { s.y = -2; s.x = Math.random() * W; }
+      const a = 0.5 + Math.sin(s.twinkle) * 0.4;
+      ctx.fillStyle = `rgba(255, 255, 255, ${a})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
   function tick(dt) {
+    state.hueShift = (state.hueShift + dt * 40) % 360;
     state.elapsed += dt * 1000;
+    state.shake *= 0.88;
+    state.flash *= 0.88;
+
+    for (const k in state.activePowerups) {
+      state.activePowerups[k] -= dt;
+      if (state.activePowerups[k] <= 0) delete state.activePowerups[k];
+    }
+    renderBadges();
+
+    const timeScale = isPowerupActive('slow') ? 0.4 : 1;
+
     state.spawnTimer += dt * 1000;
-    const interval = Math.max(350, state.spawnInterval - state.elapsed * 0.02);
-    if (state.spawnTimer >= interval) {
-      state.spawnTimer = 0;
-      spawnObject();
+    const interval = Math.max(320, 900 - state.elapsed * 0.025);
+    if (state.spawnTimer >= interval) { state.spawnTimer = 0; spawnObject(); }
+
+    state.powerupTimer += dt * 1000;
+    if (state.powerupTimer >= 7000 + Math.random() * 4000) {
+      state.powerupTimer = 0; spawnPowerup();
+    }
+
+    if (state.comboTimer > 0) {
+      state.comboTimer -= dt;
+      if (state.comboTimer <= 0) { state.combo = 0; comboEl.classList.remove('show'); }
     }
 
     for (const o of state.objects) {
-      o.x += o.vx * dt;
-      o.y += o.vy * dt;
-      o.rot += o.vr * dt;
-      if (o.x < o.r || o.x > W - o.r) o.vx *= -1;
+      o.trail.push({ x: o.x, y: o.y, life: 0.4 });
+      if (o.trail.length > 8) o.trail.shift();
+      for (const t of o.trail) t.life -= dt;
+
+      o.x += o.vx * dt * timeScale;
+      o.y += o.vy * dt * timeScale;
+      o.rot += o.vr * dt * timeScale;
+      if (o.pulse !== undefined) o.pulse += dt * 6;
+      if (o.x < o.r) { o.x = o.r; o.vx *= -1; }
+      if (o.x > W - o.r) { o.x = W - o.r; o.vx *= -1; }
       if (o.y - o.r > H) {
         o.alive = false;
-        if (!o.bomb) {
-          state.lives -= 1;
-          livesEl.textContent = state.lives;
+        if (o.type === 'star' || o.type === 'gem') {
+          state.combo = 0; comboEl.classList.remove('show');
+          state.lives -= 1; livesEl.textContent = state.lives;
+          flashScreen('#ff4d6d', 0.2);
           if (state.lives <= 0) gameOver();
         }
       }
@@ -207,30 +453,125 @@
     state.objects = state.objects.filter(o => o.alive);
 
     for (const p of state.particles) {
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 400 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vy += (p.gravity || 0) * dt;
       p.life -= dt;
     }
     state.particles = state.particles.filter(p => p.life > 0);
+
+    for (const pu of state.popups) {
+      pu.y += pu.vy * dt; pu.vy *= 0.92;
+      pu.life -= dt * 1.2;
+    }
+    state.popups = state.popups.filter(p => p.life > 0);
+
+    for (const sw of state.shockwaves) {
+      sw.r += (sw.maxR - sw.r) * dt * 6;
+      sw.life -= dt;
+    }
+    state.shockwaves = state.shockwaves.filter(s => s.life > 0);
   }
 
   function render() {
-    ctx.clearRect(0, 0, W, H);
+    const sx = state.shake > 0.5 ? (Math.random() - 0.5) * state.shake : 0;
+    const sy = state.shake > 0.5 ? (Math.random() - 0.5) * state.shake : 0;
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    drawBackground(1 / 60);
 
     for (const o of state.objects) {
-      if (o.bomb) drawBomb(o.x, o.y, o.r, o.rot);
-      else drawStar(o.x, o.y, o.r, o.rot);
+      for (let i = 0; i < o.trail.length; i++) {
+        const t = o.trail[i];
+        const alpha = Math.max(0, t.life / 0.4) * (i / o.trail.length);
+        ctx.globalAlpha = alpha * 0.6;
+        let color = '#ffd166';
+        if (o.type === 'bomb') color = '#ff4d6d';
+        else if (o.type === 'gem') color = `hsl(${(state.hueShift * 2) % 360}, 100%, 65%)`;
+        else if (o.type === 'powerup') color = POWERUPS[o.kind].color;
+        ctx.fillStyle = color;
+        ctx.shadowColor = color; ctx.shadowBlur = 14;
+        ctx.beginPath(); ctx.arc(t.x, t.y, o.r * 0.3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+      if (o.type === 'bomb') drawBomb(o.x, o.y, o.r, o.rot);
+      else if (o.type === 'gem') drawGem(o.x, o.y, o.r, o.rot);
+      else if (o.type === 'powerup') drawPowerup(o);
+      else drawStar(o.x, o.y, o.r, o.rot, o.hue);
     }
+
+    for (const sw of state.shockwaves) {
+      const alpha = sw.life / sw.maxLife;
+      ctx.strokeStyle = sw.color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 4 * alpha;
+      ctx.shadowColor = sw.color; ctx.shadowBlur = 20;
+      ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 
     for (const p of state.particles) {
       ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
       ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+    for (const pu of state.popups) {
+      const a = Math.min(1, pu.life);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = pu.color;
+      ctx.strokeStyle = 'rgba(0,0,0,.6)';
+      ctx.lineWidth = 4;
+      ctx.font = 'bold 22px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = pu.color; ctx.shadowBlur = 16;
+      ctx.strokeText(pu.text, pu.x, pu.y);
+      ctx.fillText(pu.text, pu.x, pu.y);
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+    if (isPowerupActive('shield')) {
+      const pulse = 0.3 + Math.sin(state.elapsed * 0.008) * 0.1;
+      ctx.strokeStyle = `rgba(255, 166, 0, ${pulse})`;
+      ctx.lineWidth = 6;
+      ctx.shadowColor = '#ffa600'; ctx.shadowBlur = 20;
+      ctx.strokeRect(4, 4, W - 8, H - 8);
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.restore();
+
+    if (state.flash > 0.01) {
+      ctx.fillStyle = state.flashColor;
+      ctx.globalAlpha = state.flash;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function renderBadges() {
+    const active = Object.keys(state.activePowerups);
+    if (active.length === powerupsEl.childElementCount && active.every((k, i) => powerupsEl.children[i]?.dataset.k === k)) {
+      for (let i = 0; i < active.length; i++) {
+        const k = active[i];
+        const t = Math.max(0, state.activePowerups[k]);
+        powerupsEl.children[i].querySelector('.t').textContent = t.toFixed(1) + 's';
+      }
+      return;
+    }
+    powerupsEl.innerHTML = '';
+    for (const k of active) {
+      const p = POWERUPS[k];
+      const el = document.createElement('div');
+      el.className = 'badge';
+      el.style.color = p.color;
+      el.dataset.k = k;
+      el.innerHTML = `<span class="dot"></span>${p.label} <span class="t">${state.activePowerups[k].toFixed(1)}s</span>`;
+      powerupsEl.appendChild(el);
+    }
   }
 
   function loop(now) {
@@ -238,26 +579,99 @@
     if (!state.lastTime) state.lastTime = now;
     const dt = Math.min(0.05, (now - state.lastTime) / 1000);
     state.lastTime = now;
-    tick(dt);
-    render();
+    tick(dt); render();
     requestAnimationFrame(loop);
   }
 
+  function applyPowerup(kind, x, y) {
+    const p = POWERUPS[kind];
+    addBurst(x, y, p.color, 30, 300);
+    addShockwave(x, y, p.color);
+    flashScreen(p.color, 0.35);
+    addPopup(x, y - 20, p.label + '!', p.color);
+
+    if (kind === 'life') {
+      state.lives += 1; livesEl.textContent = state.lives;
+    } else if (kind === 'nuke') {
+      for (const o of state.objects) {
+        if (o.type === 'bomb') {
+          addBurst(o.x, o.y, '#ff4d6d', 14, 260);
+          o.alive = false;
+        } else if (o.type === 'star' || o.type === 'gem') {
+          addBurst(o.x, o.y, '#ffd166', 12, 200);
+          const pts = o.type === 'gem' ? 5 : 1;
+          state.score += pts * (isPowerupActive('double') ? 2 : 1);
+          o.alive = false;
+        }
+      }
+      scoreEl.textContent = state.score;
+      screenShake(14);
+    } else {
+      state.activePowerups[kind] = p.dur;
+    }
+    renderBadges();
+  }
+
   function handleTap(x, y) {
+    addShockwave(x, y, 'rgba(255,255,255,.8)');
+
+    if (isPowerupActive('magnet')) {
+      for (const o of state.objects) {
+        if (o.type === 'star' || o.type === 'gem' || o.type === 'powerup') {
+          const dx = x - o.x, dy = y - o.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 160 && d > 0) {
+            o.vx += dx / d * 600; o.vy += dy / d * 600;
+          }
+        }
+      }
+    }
+
     for (let i = state.objects.length - 1; i >= 0; i--) {
       const o = state.objects[i];
       const dx = x - o.x, dy = y - o.y;
-      if (dx * dx + dy * dy <= o.r * o.r * 1.2) {
+      if (dx * dx + dy * dy <= o.r * o.r * 1.3) {
         o.alive = false;
-        if (o.bomb) {
-          addBurst(o.x, o.y, '#ef476f');
-          state.lives -= 1;
-          livesEl.textContent = state.lives;
-          if (state.lives <= 0) gameOver();
+        if (o.type === 'bomb') {
+          if (isPowerupActive('shield')) {
+            delete state.activePowerups.shield;
+            addBurst(o.x, o.y, '#ffa600', 28, 320);
+            addShockwave(o.x, o.y, '#ffa600');
+            flashScreen('#ffa600', 0.45);
+            addPopup(o.x, o.y, 'BLOCKED!', '#ffa600');
+            screenShake(10);
+          } else {
+            addBurst(o.x, o.y, '#ff4d6d', 30, 340);
+            addShockwave(o.x, o.y, '#ff4d6d');
+            flashScreen('#ff4d6d', 0.6);
+            screenShake(18);
+            state.lives -= 1; livesEl.textContent = state.lives;
+            state.combo = 0; comboEl.classList.remove('show');
+            addPopup(o.x, o.y, '-1 LIFE', '#ff4d6d');
+            if (state.lives <= 0) gameOver();
+          }
+        } else if (o.type === 'powerup') {
+          applyPowerup(o.kind, o.x, o.y);
         } else {
-          addBurst(o.x, o.y, '#ffd166');
-          state.score += 1;
+          const base = o.type === 'gem' ? 5 : 1;
+          state.combo += 1;
+          state.comboTimer = 2.5;
+          const mult = (isPowerupActive('double') ? 2 : 1) * Math.max(1, Math.floor(state.combo / 5) + 1);
+          const pts = base * mult;
+          state.score += pts;
           scoreEl.textContent = state.score;
+          scoreEl.classList.remove('pulse'); void scoreEl.offsetWidth; scoreEl.classList.add('pulse');
+
+          const color = o.type === 'gem' ? `hsl(${(state.hueShift * 2) % 360}, 100%, 65%)` : `hsl(${o.hue}, 100%, 65%)`;
+          addBurst(o.x, o.y, color, o.type === 'gem' ? 24 : 16, 260);
+          addShockwave(o.x, o.y, color);
+          addPopup(o.x, o.y, '+' + pts, color);
+
+          if (state.combo >= 3) {
+            comboEl.textContent = state.combo + 'x COMBO!';
+            comboEl.style.color = `hsl(${(state.hueShift * 3) % 360}, 100%, 65%)`;
+            comboEl.classList.add('show');
+          }
         }
         return;
       }
@@ -266,34 +680,34 @@
 
   function onPointer(e) {
     if (!state.running) return;
-    const t = e.touches ? e.touches[0] : e;
-    if (!t) return;
+    const touches = e.touches ? e.touches : [e];
     const rect = canvas.getBoundingClientRect();
-    handleTap(t.clientX - rect.left, t.clientY - rect.top);
+    for (const t of touches) {
+      handleTap(t.clientX - rect.left, t.clientY - rect.top);
+    }
     e.preventDefault();
   }
   canvas.addEventListener('touchstart', onPointer, { passive: false });
   canvas.addEventListener('mousedown', onPointer);
 
   function startGame() {
+    resize();
     state.running = true;
-    state.score = 0;
-    state.lives = 3;
-    state.objects = [];
-    state.particles = [];
-    state.spawnTimer = 0;
-    state.elapsed = 0;
-    state.lastTime = 0;
-    scoreEl.textContent = '0';
-    livesEl.textContent = '3';
+    state.score = 0; state.lives = 3; state.combo = 0; state.comboTimer = 0;
+    state.objects = []; state.particles = []; state.popups = []; state.shockwaves = [];
+    state.spawnTimer = 0; state.powerupTimer = 0; state.elapsed = 0; state.lastTime = 0;
+    state.shake = 0; state.flash = 0; state.activePowerups = {};
+    scoreEl.textContent = '0'; livesEl.textContent = '3';
+    comboEl.classList.remove('show');
     overlay.classList.add('hidden');
     finalScoreEl.style.display = 'none';
+    renderBadges();
     requestAnimationFrame(loop);
   }
 
   function gameOver() {
     state.running = false;
-    finalScoreEl.textContent = 'Final Score: ' + state.score;
+    finalScoreEl.textContent = 'Score: ' + state.score;
     finalScoreEl.style.display = 'block';
     startBtn.textContent = 'Play Again';
     overlay.classList.remove('hidden');
@@ -301,6 +715,8 @@
 
   startBtn.addEventListener('click', startGame);
   startBtn.addEventListener('touchend', (e) => { e.preventDefault(); startGame(); }, { passive: false });
+
+  resize();
 })();
 </script>
 </body>
